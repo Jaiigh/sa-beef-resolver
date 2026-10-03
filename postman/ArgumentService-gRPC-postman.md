@@ -1,12 +1,12 @@
 # Testing the gRPC ArgumentService in Postman
 
-Postman cannot export gRPC requests as a collection file, so create them once by hand with the steps and messages below.
+Postman's JSON (v2.1) collection files only hold HTTP requests, so the gRPC requests are created once in the app with the steps and messages below. After that you can keep them in a Postman collection and share them through your workspace.
 
 ## One-time setup
 1. Start the Beef REST API (`BeefResolverApi`, `npm start`) and the gRPC service (`dotnet run --project server/HumanResolve.ArgumentService`).
 2. In Postman choose **New -> gRPC**.
 3. Server URL: `localhost:50051` (turn **TLS off**; the service is plaintext HTTP/2).
-4. Under **Service definition** choose **Import a .proto file** and select `EvidenceAndArgumentSubmission/proto/evidence_argument.proto`.
+4. On the **Service definition** tab choose **Use server reflection** (the service has reflection enabled, so no `.proto` file is needed). If reflection is unavailable, choose **Import a .proto file** and select `EvidenceAndArgumentSubmission/proto/evidence_argument.proto`.
 5. Pick the method from the dropdown, paste the message on the **Message** tab, click **Invoke**.
 
 The service links to the REST API, so `dispute_id` is a beef id and `person_id` is that beef's `person_a` or `person_b`. Run `npm run reset-db` in `BeefResolverApi` first.

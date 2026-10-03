@@ -12,6 +12,7 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddGrpc();
+builder.Services.AddGrpcReflection();
 builder.Services.AddSingleton<IArgumentRepository, InMemoryArgumentRepository>();
 var beefApiUrl = builder.Configuration["BEEF_API_URL"] ?? "http://localhost:3000";
 builder.Services.AddHttpClient<IBeefClient, HttpBeefClient>(client =>
@@ -22,5 +23,6 @@ builder.Services.AddHttpClient<IBeefClient, HttpBeefClient>(client =>
 
 var app = builder.Build();
 app.MapGrpcService<ArgumentGrpcService>();
+app.MapGrpcReflectionService(); // lets Postman/grpcurl discover methods without the .proto file
 app.MapGet("/", () => "This endpoint is a gRPC server. Use a gRPC client to communicate.");
 app.Run();
