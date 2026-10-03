@@ -1,0 +1,14 @@
+{
+  "name": "evidence-and-argument-submission",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pure gRPC CRUD service for Human Resolve arguments and evidence",
+  "scripts": {
+    "start:client": "node client/src/client.js",
+    "test:client": "node --check client/src/client.js"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.12.6",
+    "@grpc/proto-loader": "^0.7.15"
+  }
+}

@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package humanresolve.argument.v1;
+option csharp_namespace = "HumanResolve.Argument.V1";
+
+// Unary RPCs are the right fit for normal CRUD operations.  The service owns
+// argument records and the metadata/URLs of their attached evidence.
+service ArgumentService {
+  rpc CreateArgument(CreateArgumentRequest) returns (Argument);
+  rpc GetArgument(GetArgumentRequest) returns (Argument);
+  rpc GetAllArguments(GetAllArgumentsRequest) returns (GetAllArgumentsResponse);
+  rpc UpdateArgument(UpdateArgumentRequest) returns (Argument);
+  rpc DeleteArgument(DeleteArgumentRequest) returns (DeleteArgumentResponse);
+}
+
+enum ArgumentStatus {
+  ARGUMENT_STATUS_UNSPECIFIED = 0;
+  ARGUMENT_STATUS_DRAFT = 1;
+  ARGUMENT_STATUS_SUBMITTED = 2;
+}
+
+enum EvidenceType {
+  EVIDENCE_TYPE_UNSPECIFIED = 0;
+  EVIDENCE_TYPE_IMAGE = 1;
+  EVIDENCE_TYPE_DOCUMENT = 2;
+  EVIDENCE_TYPE_LINK = 3;
+  EVIDENCE_TYPE_OTHER = 4;
+}
+
+message Evidence {
+  string evidence_id = 1;
+  EvidenceType type = 2;
+  string evidence_url = 3;
+  string description = 4;
+  string created_at = 5; // RFC 3339 UTC timestamp
+}
+
+message Argument {
+  string argument_id = 1;
+  string dispute_id = 2;
+  string person_id = 3;
+  string statement = 4;
+  repeated Evidence evidence = 5;
+  ArgumentStatus status = 6;
+  int32 version = 7;
+  string created_at = 8; // RFC 3339 UTC timestamp
+  string updated_at = 9; // RFC 3339 UTC timestamp
+}
+
+message CreateArgumentRequest {
+  string dispute_id = 1;
+  string person_id = 2;
+  string statement = 3;
+  repeated Evidence evidence = 4;
+  ArgumentStatus status = 5;
+}
+
+message GetArgumentRequest {
+  string argument_id = 1;
+}
+
+message GetAllArgumentsRequest {
+  string dispute_id = 1;
+  string person_id = 2; // Optional author filter.
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message GetAllArgumentsResponse {
+  repeated Argument arguments = 1;
+  string next_page_token = 2;
+}
+
+message UpdateArgumentRequest {
+  string argument_id = 1;
+  string requester_person_id = 2;
+  string statement = 3;
+  repeated Evidence evidence = 4;
+  ArgumentStatus status = 5;
+  int32 expected_version = 6;
+}
+
+message DeleteArgumentRequest {
+  string argument_id = 1;
+  string requester_person_id = 2;
+  int32 expected_version = 3;
+}
+
+message DeleteArgumentResponse {
+  string argument_id = 1;
+  bool deleted = 2;
+}
