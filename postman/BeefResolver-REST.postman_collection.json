@@ -1,0 +1,349 @@
+{
+  "info": {
+    "name": "Beef Resolver REST API",
+    "description": "Run reset-db first so the POST gets id 8. Requests 1-6 run in order.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "newId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. GET ALL",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"7 beefs after reset\",()=>pm.expect(pm.response.json().count).to.eql(7));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/beefs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "beefs"
+          ]
+        },
+        "description": "All records (7 after reset-db)."
+      }
+    },
+    {
+      "name": "2. GET by person (A)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"A has 4 beefs\",()=>pm.expect(pm.response.json().count).to.eql(4));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/beefs?person=A",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "beefs"
+          ],
+          "query": [
+            {
+              "key": "person",
+              "value": "A"
+            }
+          ]
+        },
+        "description": "Who does A have beef with? B, C, D, E."
+      }
+    },
+    {
+      "name": "3. GET ONE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200\",()=>pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/beefs/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "beefs",
+            "1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. POST (create)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"201\",()=>pm.response.to.have.status(201));",
+              "pm.collectionVariables.set(\"newId\", pm.response.json().id);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"person_a\": \"Maya\",\n  \"person_b\": \"Nina\",\n  \"reason\": \"They disagree about who should choose the team name.\",\n  \"status\": \"active\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/beefs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "beefs"
+          ]
+        },
+        "description": "Saves the new id into {{newId}} for the PUT and DELETE steps."
+      }
+    },
+    {
+      "name": "5. PUT (update)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200\",()=>pm.response.to.have.status(200));",
+              "pm.test(\"resolved\",()=>pm.expect(pm.response.json().status).to.eql(\"resolved\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"person_a\": \"Maya\",\n  \"person_b\": \"Nina\",\n  \"reason\": \"They discussed the team-name issue and reached an agreement.\",\n  \"status\": \"resolved\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/beefs/{{newId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "beefs",
+            "{{newId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. DELETE",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200\",()=>pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/beefs/{{newId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "beefs",
+            "{{newId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Error cases",
+      "item": [
+        {
+          "name": "GET missing id (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404\",()=>pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/beefs/999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "beefs",
+                "999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST same person (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400\",()=>pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"person_a\": \"A\",\n  \"person_b\": \"A\",\n  \"reason\": \"x\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/beefs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "beefs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST duplicate pair (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"409\",()=>pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"person_a\": \"A\",\n  \"person_b\": \"B\",\n  \"reason\": \"duplicate\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/beefs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "beefs"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
