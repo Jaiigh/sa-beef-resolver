@@ -1,3 +1,4 @@
+using HumanResolve.ArgumentService.Clients;
 using HumanResolve.ArgumentService.Repositories;
 using HumanResolve.ArgumentService.Services;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -12,6 +13,12 @@ builder.WebHost.ConfigureKestrel(options =>
 
 builder.Services.AddGrpc();
 builder.Services.AddSingleton<IArgumentRepository, InMemoryArgumentRepository>();
+var beefApiUrl = builder.Configuration["BEEF_API_URL"] ?? "http://localhost:3000";
+builder.Services.AddHttpClient<IBeefClient, HttpBeefClient>(client =>
+{
+    client.BaseAddress = new Uri(beefApiUrl.TrimEnd('/') + "/");
+    client.Timeout = TimeSpan.FromSeconds(3);
+});
 
 var app = builder.Build();
 app.MapGrpcService<ArgumentGrpcService>();

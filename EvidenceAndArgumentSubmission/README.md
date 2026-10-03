@@ -36,3 +36,24 @@ The server uses `127.0.0.1:50051` by default. Set `GRPC_PORT` to override its po
 - Uses `expected_version` for optimistic concurrency. An old version returns `ABORTED`, so a caller cannot silently overwrite a newer edit.
 - The included C# `InMemoryArgumentRepository` is a repository boundary, so PostgreSQL/EF Core can replace it later without changing the `.proto` contract.
 - The Node.js sample client sets a five-second deadline and proves that gRPC is cross-language. For deployment, replace insecure localhost transport with TLS and derive `person_id` from authenticated identity rather than client input.
+
+## Link to the Beef REST API
+
+`CreateArgument` checks the dispute with `BeefResolverApi` (`GET {BEEF_API_URL}/api/beefs/{dispute_id}`, default `http://localhost:3000`). `dispute_id` is the beef id and `person_id` is that beef's `person_a` or `person_b`. The services still share no code or database.
+
+| Situation | gRPC status |
+| --- | --- |
+| `dispute_id` is not a number | `INVALID_ARGUMENT` |
+| Beef does not exist | `NOT_FOUND` |
+| `person_id` is not `person_a`/`person_b` | `PERMISSION_DENIED` |
+| Beef is `resolved` | `FAILED_PRECONDITION` |
+| REST API down or slower than 3 s | `UNAVAILABLE` |
+
+Run both services, then the demo client (`DISPUTE_ID` and `PERSON_ID` override its defaults of `1` and `A`):
+
+```bash
+cd BeefResolverApi && npm start                                   # terminal 1
+cd EvidenceAndArgumentSubmission
+dotnet run --project server/HumanResolve.ArgumentService          # terminal 2
+npm install && npm run start:client                               # terminal 3
+```

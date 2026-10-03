@@ -24,8 +24,8 @@ function call(method, request) {
 
 async function demo() {
   const created = await call("createArgument", {
-    dispute_id: "dispute-001",
-    person_id: "person-a",
+    dispute_id: process.env.DISPUTE_ID || "1",
+    person_id: process.env.PERSON_ID || "A",
     statement: "I returned the borrowed book on Monday.",
     status: "ARGUMENT_STATUS_SUBMITTED",
     evidence: [{

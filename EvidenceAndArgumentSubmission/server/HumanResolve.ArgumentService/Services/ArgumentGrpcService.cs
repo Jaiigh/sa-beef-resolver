@@ -1,4 +1,5 @@
 using Grpc.Core;
+using HumanResolve.ArgumentService.Clients;
 using HumanResolve.ArgumentService.Domain;
 using HumanResolve.ArgumentService.Repositories;
 using Proto = HumanResolve.Argument.V1;
@@ -7,18 +8,35 @@ using DomainEvidenceType = HumanResolve.ArgumentService.Domain.EvidenceType;
 
 namespace HumanResolve.ArgumentService.Services;
 
-public sealed class ArgumentGrpcService(IArgumentRepository repository) : Proto.ArgumentService.ArgumentServiceBase
+public sealed class ArgumentGrpcService(IArgumentRepository repository, IBeefClient beefClient) : Proto.ArgumentService.ArgumentServiceBase
 {
     private const int DefaultPageSize = 20;
     private const int MaximumPageSize = 100;
 
-    public override Task<Proto.Argument> CreateArgument(Proto.CreateArgumentRequest request, ServerCallContext context)
+    public override async Task<Proto.Argument> CreateArgument(Proto.CreateArgumentRequest request, ServerCallContext context)
     {
         var disputeId = Required(request.DisputeId, "dispute_id");
         var personId = Required(request.PersonId, "person_id");
         var statement = Required(request.Statement, "statement", 10_000);
-        var record = repository.Create(disputeId, personId, statement, ToEvidence(request.Evidence), ToDomainStatus(request.Status));
-        return Task.FromResult(ToProto(record));
+        var evidence = ToEvidence(request.Evidence);
+        var status = ToDomainStatus(request.Status);
+        await EnsurePersonIsPartyToDisputeAsync(disputeId, personId, context.CancellationToken);
+        return ToProto(repository.Create(disputeId, personId, statement, evidence, status));
+    }
+
+    // The dispute lives in the Beef REST API: dispute_id is the beef id, person_id is person_a or person_b.
+    private async Task EnsurePersonIsPartyToDisputeAsync(string disputeId, string personId, CancellationToken cancellationToken)
+    {
+        if (!long.TryParse(disputeId, out var beefId) || beefId < 1)
+            throw Rpc(StatusCode.InvalidArgument, "dispute_id must be the numeric id of an existing beef");
+        BeefInfo? beef;
+        try { beef = await beefClient.GetBeefAsync(beefId, cancellationToken); }
+        catch (BeefServiceUnavailableException) { throw Rpc(StatusCode.Unavailable, "beef service is unavailable; try again later"); }
+        if (beef is null) throw Rpc(StatusCode.NotFound, "dispute was not found");
+        if (personId != beef.PersonA && personId != beef.PersonB)
+            throw Rpc(StatusCode.PermissionDenied, "person_id is not a party to this dispute");
+        if (beef.Status == "resolved")
+            throw Rpc(StatusCode.FailedPrecondition, "dispute is already resolved");
     }
 
     public override Task<Proto.Argument> GetArgument(Proto.GetArgumentRequest request, ServerCallContext context)
