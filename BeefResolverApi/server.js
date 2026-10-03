@@ -1,31 +1,11 @@
 const http = require('node:http');
-const { execFileSync } = require('node:child_process');
-const { existsSync, readFileSync } = require('node:fs');
-const path = require('node:path');
+const { pool, initialiseDatabase } = require('./db');
 
 const PORT = process.env.PORT || 3000;
-const DB_PATH = path.join(__dirname, 'beef-resolver.db');
-const SCHEMA_PATH = path.join(__dirname, 'schema.sql');
 
-function initialiseDatabase() {
-  if (!existsSync(DB_PATH)) {
-    // Feed the schema through stdin so paths containing spaces (e.g. Windows user folders) work.
-    execFileSync('sqlite3', [DB_PATH], { input: readFileSync(SCHEMA_PATH) });
-    console.log('Created database and inserted mock data.');
-  }
-}
-
-function sqlValue(value) {
-  return `'${String(value).replace(/'/g, "''")}'`;
-}
-
-function query(sql) {
-  const result = execFileSync('sqlite3', ['-json', DB_PATH, sql], { encoding: 'utf8' });
-  return result.trim() ? JSON.parse(result) : [];
-}
-
-function run(sql) {
-  execFileSync('sqlite3', [DB_PATH, sql], { encoding: 'utf8' });
+async function query(sql, params = []) {
+  const { rows } = await pool.query(sql, params);
+  return rows;
 }
 
 function send(response, statusCode, body) {
@@ -52,8 +32,6 @@ function validateBeef(body) {
   return null;
 }
 
-initialiseDatabase();
-
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
   const route = url.pathname.match(/^\/api\/beefs(?:\/(\d+))?\/?$/);
@@ -67,8 +45,9 @@ const server = http.createServer(async (request, response) => {
   try {
     if (request.method === 'GET' && !id) {
       const person = url.searchParams.get('person');
-      const where = person ? ` WHERE person_a = ${sqlValue(person)}` : '';
-      const beefs = query(`SELECT * FROM beefs${where} ORDER BY id`);
+      const beefs = person
+        ? await query('SELECT * FROM beefs WHERE person_a = $1 ORDER BY id', [person])
+        : await query('SELECT * FROM beefs ORDER BY id');
       return send(response, 200, {
         count: beefs.length,
         beefs,
@@ -77,7 +56,7 @@ const server = http.createServer(async (request, response) => {
     }
 
     if (request.method === 'GET' && id) {
-      const [beef] = query(`SELECT * FROM beefs WHERE id = ${id}`);
+      const [beef] = await query('SELECT * FROM beefs WHERE id = $1', [id]);
       return beef ? send(response, 200, beef) : send(response, 404, { error: `Beef #${id} was not found.` });
     }
 
@@ -85,7 +64,10 @@ const server = http.createServer(async (request, response) => {
       const body = await readJson(request);
       const problem = validateBeef(body);
       if (problem) return send(response, 400, { error: problem });
-      const [beef] = query(`INSERT INTO beefs (person_a, person_b, reason, status) VALUES (${sqlValue(body.person_a)}, ${sqlValue(body.person_b)}, ${sqlValue(body.reason)}, ${sqlValue(body.status || 'active')}); SELECT * FROM beefs WHERE id = last_insert_rowid()`);
+      const [beef] = await query(
+        'INSERT INTO beefs (person_a, person_b, reason, status) VALUES ($1, $2, $3, $4) RETURNING *',
+        [body.person_a, body.person_b, body.reason, body.status || 'active']
+      );
       return send(response, 201, beef);
     }
 
@@ -93,25 +75,30 @@ const server = http.createServer(async (request, response) => {
       const body = await readJson(request);
       const problem = validateBeef(body);
       if (problem) return send(response, 400, { error: problem });
-      const existing = query(`SELECT id FROM beefs WHERE id = ${id}`)[0];
-      if (!existing) return send(response, 404, { error: `Beef #${id} was not found.` });
-      run(`UPDATE beefs SET person_a = ${sqlValue(body.person_a)}, person_b = ${sqlValue(body.person_b)}, reason = ${sqlValue(body.reason)}, status = ${sqlValue(body.status || 'active')}, updated_at = CURRENT_TIMESTAMP WHERE id = ${id}`);
-      const [beef] = query(`SELECT * FROM beefs WHERE id = ${id}`);
-      return send(response, 200, beef);
+      const [beef] = await query(
+        'UPDATE beefs SET person_a = $1, person_b = $2, reason = $3, status = $4, updated_at = NOW() WHERE id = $5 RETURNING *',
+        [body.person_a, body.person_b, body.reason, body.status || 'active', id]
+      );
+      return beef ? send(response, 200, beef) : send(response, 404, { error: `Beef #${id} was not found.` });
     }
 
     if (request.method === 'DELETE' && id) {
-      const [beef] = query(`SELECT * FROM beefs WHERE id = ${id}`);
+      const [beef] = await query('DELETE FROM beefs WHERE id = $1 RETURNING *', [id]);
       if (!beef) return send(response, 404, { error: `Beef #${id} was not found.` });
-      run(`DELETE FROM beefs WHERE id = ${id}`);
       return send(response, 200, { message: `Beef #${id} deleted.`, deleted: beef });
     }
 
     return send(response, 405, { error: 'Method not allowed for this route.' });
   } catch (error) {
-    const message = error.stderr?.toString().trim() || error.message;
-    return send(response, 500, { error: 'Database operation failed.', detail: message });
+    if (error.code === '23505') return send(response, 409, { error: 'That person_a/person_b beef already exists.' });
+    return send(response, 500, { error: 'Database operation failed.', detail: error.message });
   }
 });
 
-server.listen(PORT, () => console.log(`Beef Resolver API: http://localhost:${PORT}`));
+initialiseDatabase()
+  .then(() => server.listen(PORT, () => console.log(`Beef Resolver API: http://localhost:${PORT}`)))
+  .catch((error) => {
+    console.error(`Could not connect to the database: ${error.message}
+Start it with: docker compose up -d`);
+    process.exit(1);
+  });

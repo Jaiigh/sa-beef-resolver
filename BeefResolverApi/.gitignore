@@ -1,5 +1,4 @@
-# Generated local database: each developer creates and resets their own copy.
-beef-resolver.db
+node_modules/
 
 # Node diagnostics
 npm-debug.log*

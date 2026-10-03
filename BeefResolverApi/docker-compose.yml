@@ -1,0 +1,16 @@
+services:
+  beef-db:
+    image: postgres:16
+    container_name: beef-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: beef_user
+      POSTGRES_PASSWORD: beef_pass
+      POSTGRES_DB: beef_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - beef_pgdata:/var/lib/postgresql/data
+
+volumes:
+  beef_pgdata:
