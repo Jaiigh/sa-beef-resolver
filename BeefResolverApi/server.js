@@ -1,6 +1,6 @@
 const http = require('node:http');
 const { execFileSync } = require('node:child_process');
-const { existsSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 const path = require('node:path');
 
 const PORT = process.env.PORT || 3000;
@@ -9,7 +9,8 @@ const SCHEMA_PATH = path.join(__dirname, 'schema.sql');
 
 function initialiseDatabase() {
   if (!existsSync(DB_PATH)) {
-    execFileSync('sqlite3', [DB_PATH, `.read ${SCHEMA_PATH}`]);
+    // Feed the schema through stdin so paths containing spaces (e.g. Windows user folders) work.
+    execFileSync('sqlite3', [DB_PATH], { input: readFileSync(SCHEMA_PATH) });
     console.log('Created database and inserted mock data.');
   }
 }
