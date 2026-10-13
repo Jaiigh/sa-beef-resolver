@@ -1,0 +1,10 @@
+{
+  "name": "beef-resolver-rest-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Homework REST API for tracking beefs between people",
+  "scripts": {
+    "start": "node server.js",
+    "reset-db": "node reset-db.js"
+  }
+}
