@@ -1,7 +1,7 @@
 // Manual submission client: one user-selected message per invocation.
 const { parseArgs } = require('node:util');
 const readline = require('node:readline/promises');
-const { client, call } = require('./client');
+const { client, call, getSession } = require('./client');
 
 async function main() {
   const { values } = parseArgs({ options: {
@@ -20,6 +20,8 @@ async function main() {
   const interactive = !values['argument-id'] && !(values.session && values.people && values.message);
   let rl;
   try {
+    const session = await getSession();
+    const token = session.access_token;
     if (interactive) {
       if (!process.stdin.isTTY) throw new Error('Interactive input requires a terminal; use docker compose run without -T, or provide --session --people --message.');
       rl = readline.createInterface({input:process.stdin,output:process.stdout});
@@ -31,13 +33,10 @@ async function main() {
     if (![1,2].includes(people)) throw new Error('people must be 1 or 2');
     let record;
     if (values['argument-id']) {
-      record = await call('getArgument',{argument_id:values['argument-id']});
-      if (values.person && values.person !== record.person_id) throw new Error('person does not match the saved argument author');
+      record = await call('getArgument',{argument_id:values['argument-id']}, token);
     } else {
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(values.session || '')) throw new Error('Session ID must contain 1-100 letters/digits/_/-');
-      const defaultPerson = people === 1 ? 'person-a' : 'person-b';
       if (interactive) {
-        values.person ||= (await rl.question(`Person ID [${defaultPerson}]: `)).trim() || defaultPerson;
         values.message ||= await rl.question('ข้อความของคุณ: ');
         values['evidence-url'] ||= (await rl.question('Evidence URL (Enter เพื่อข้าม): ')).trim();
         if (values['evidence-url']) {
@@ -50,11 +49,11 @@ async function main() {
       if (!['LINK','IMAGE','DOCUMENT','OTHER'].includes(type)) throw new Error('invalid evidence type');
       if (values['evidence-url'] && !/^https?:$/.test(new URL(values['evidence-url']).protocol)) throw new Error('evidence URL must be HTTP(S)');
       record = await call('createArgument',{
-        dispute_id:values.session, person_id:values.person || defaultPerson, statement:values.message,
+        dispute_id:values.session, statement:values.message,
         status:'ARGUMENT_STATUS_SUBMITTED', evidence:values['evidence-url'] ? [{
           type:'EVIDENCE_TYPE_'+type,evidence_url:values['evidence-url'],description:values['evidence-description'] || '',
         }] : [],
-      });
+      }, token);
     }
     console.log(`Saved argument: ${record.argument_id} (version ${record.version})`);
     const submitCommand = process.env.GRPC_HOST === 'evidence-service'
@@ -62,8 +61,8 @@ async function main() {
       : 'node client/src/ai-demo.js';
     console.log(`If queue submission fails, retry: ${submitCommand} --argument-id ${record.argument_id} --people ${people}`);
     const submitted = await call('submitArgumentForAi',{
-      argument_id:record.argument_id,requester_person_id:record.person_id,people,expected_version:record.version,
-    });
+      argument_id:record.argument_id,people,expected_version:record.version,
+    }, token);
     console.log(JSON.stringify({sessionId:record.dispute_id,people,argumentId:record.argument_id,...submitted},null,2));
     console.log('ส่งเฉพาะข้อความของคุณแล้ว ระบบไม่ได้ส่งข้อความของอีกฝ่ายให้');
     const command = process.env.GRPC_HOST === 'evidence-service'

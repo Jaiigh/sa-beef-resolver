@@ -1,8 +1,10 @@
-# Evidence and Argument Submission - gRPC + RabbitMQ producer
+# Evidence and Argument Submission - authenticated gRPC + RabbitMQ producer
 
 This implements the functional requirement **“Users can submit arguments and evidence for AI analysis.”** Every argument belongs to one `dispute_id` and one author `person_id`. The gRPC backend is ASP.NET Core (.NET/C#), consistent with ADR-2.
 
 It is a pure gRPC module: there is no REST/Express layer. The service uses unary RPCs because each CRUD request has one request and one response.
+
+`Register` and `Login` issue JWT access tokens. All `ArgumentService` calls require an `authorization: Bearer <token>` gRPC metadata header. The service derives the author from the token, and ignores the deprecated `person_id` and `requester_person_id` mutation fields.
 
 `SubmitArgumentForAi` publishes an already saved SUBMITTED argument to RabbitMQ,
 using its dispute ID as the AI session ID. The Python AI worker consumes it.
@@ -24,6 +26,7 @@ builds both the ASP.NET Core service and the optional Node demo-client target.
 | `UpdateArgument` | Update the statement, evidence and status of the author's argument |
 | `DeleteArgument` | Delete the author's argument |
 | `SubmitArgumentForAi` | Validate author/version and side (1/2), publish with broker confirmation |
+| `Register` / `Login` | Create an account or obtain a JWT access token |
 
 An evidence item stores only metadata and an HTTP(S) `evidence_url`; upload the actual file separately to object storage. This prevents large file uploads from exceeding gRPC message limits.
 

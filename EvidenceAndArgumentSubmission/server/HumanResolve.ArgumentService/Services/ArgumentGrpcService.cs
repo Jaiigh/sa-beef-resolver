@@ -20,7 +20,7 @@ public sealed class ArgumentGrpcService(IArgumentRepository repository, RabbitMq
         Proto.SubmitArgumentForAiRequest request, ServerCallContext context)
     {
         var id = ParseGuid(request.ArgumentId, "argument_id");
-        var person = Required(request.RequesterPersonId, "requester_person_id");
+        var person = CurrentUserId(context);
         if (request.People is not (1 or 2)) throw Rpc(StatusCode.InvalidArgument, "people must be 1 or 2");
         var record = repository.Get(id) ?? throw Rpc(StatusCode.NotFound, "argument was not found");
         if (record.PersonId != person) throw Rpc(StatusCode.PermissionDenied, "only the author may submit this argument");
@@ -56,9 +56,8 @@ public sealed class ArgumentGrpcService(IArgumentRepository repository, RabbitMq
     public override Task<Proto.Argument> CreateArgument(Proto.CreateArgumentRequest request, ServerCallContext context)
     {
         var disputeId = Required(request.DisputeId, "dispute_id");
-        var personId = Required(request.PersonId, "person_id");
         var statement = Required(request.Statement, "statement", 10_000);
-        var record = repository.Create(disputeId, personId, statement, ToEvidence(request.Evidence), ToDomainStatus(request.Status));
+        var record = repository.Create(disputeId, CurrentUserId(context), statement, ToEvidence(request.Evidence), ToDomainStatus(request.Status));
         return Task.FromResult(ToProto(record));
     }
 
@@ -85,10 +84,9 @@ public sealed class ArgumentGrpcService(IArgumentRepository repository, RabbitMq
     public override Task<Proto.Argument> UpdateArgument(Proto.UpdateArgumentRequest request, ServerCallContext context)
     {
         var id = ParseGuid(request.ArgumentId, "argument_id");
-        var personId = Required(request.RequesterPersonId, "requester_person_id");
         var statement = Required(request.Statement, "statement", 10_000);
         if (request.ExpectedVersion < 1) throw Rpc(StatusCode.InvalidArgument, "expected_version must be a positive integer");
-        var result = repository.Update(id, personId, statement, ToEvidence(request.Evidence), ToDomainStatus(request.Status), request.ExpectedVersion);
+        var result = repository.Update(id, CurrentUserId(context), statement, ToEvidence(request.Evidence), ToDomainStatus(request.Status), request.ExpectedVersion);
         return result.Kind switch
         {
             UpdateResultKind.Updated => Task.FromResult(ToProto(result.Argument!)),
@@ -102,9 +100,8 @@ public sealed class ArgumentGrpcService(IArgumentRepository repository, RabbitMq
     public override Task<Proto.DeleteArgumentResponse> DeleteArgument(Proto.DeleteArgumentRequest request, ServerCallContext context)
     {
         var id = ParseGuid(request.ArgumentId, "argument_id");
-        var personId = Required(request.RequesterPersonId, "requester_person_id");
         if (request.ExpectedVersion < 1) throw Rpc(StatusCode.InvalidArgument, "expected_version must be a positive integer");
-        var result = repository.Delete(id, personId, request.ExpectedVersion);
+        var result = repository.Delete(id, CurrentUserId(context), request.ExpectedVersion);
         return result.Kind switch
         {
             DeleteResultKind.Deleted => Task.FromResult(new Proto.DeleteArgumentResponse { ArgumentId = id.ToString(), Deleted = true }),
@@ -132,6 +129,14 @@ public sealed class ArgumentGrpcService(IArgumentRepository repository, RabbitMq
         : int.TryParse(token, out var offset) && offset >= 0
             ? offset
             : throw Rpc(StatusCode.InvalidArgument, "page_token is invalid");
+
+    private static string CurrentUserId(ServerCallContext context)
+    {
+        var value = context.GetHttpContext().User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        return Guid.TryParse(value, out var personId)
+            ? personId.ToString()
+            : throw Rpc(StatusCode.Unauthenticated, "a valid bearer token is required");
+    }
 
     private static DomainArgumentStatus ToDomainStatus(Proto.ArgumentStatus status) => status switch
     {

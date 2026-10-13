@@ -15,6 +15,38 @@ service ArgumentService {
   rpc SubmitArgumentForAi(SubmitArgumentForAiRequest) returns (SubmitArgumentForAiResponse);
 }
 
+service AuthenticationService {
+  rpc Register(RegisterRequest) returns (AuthenticationResponse);
+  rpc Login(LoginRequest) returns (AuthenticationResponse);
+  rpc GetCurrentUser(GetCurrentUserRequest) returns (User);
+}
+
+message User {
+  string person_id = 1;
+  string email = 2;
+  string display_name = 3;
+  string created_at = 4;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string display_name = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message AuthenticationResponse {
+  User user = 1;
+  string access_token = 2;
+  string expires_at = 3;
+}
+
+message GetCurrentUserRequest {}
+
 enum ArgumentStatus {
   ARGUMENT_STATUS_UNSPECIFIED = 0;
   ARGUMENT_STATUS_DRAFT = 1;
@@ -51,7 +83,7 @@ message Argument {
 
 message CreateArgumentRequest {
   string dispute_id = 1;
-  string person_id = 2;
+  string person_id = 2 [deprecated = true]; // Derived from the JWT.
   string statement = 3;
   repeated Evidence evidence = 4;
   ArgumentStatus status = 5;
@@ -75,7 +107,7 @@ message GetAllArgumentsResponse {
 
 message UpdateArgumentRequest {
   string argument_id = 1;
-  string requester_person_id = 2;
+  string requester_person_id = 2 [deprecated = true]; // Derived from the JWT.
   string statement = 3;
   repeated Evidence evidence = 4;
   ArgumentStatus status = 5;
@@ -84,7 +116,7 @@ message UpdateArgumentRequest {
 
 message DeleteArgumentRequest {
   string argument_id = 1;
-  string requester_person_id = 2;
+  string requester_person_id = 2 [deprecated = true]; // Derived from the JWT.
   int32 expected_version = 3;
 }
 
@@ -95,7 +127,7 @@ message DeleteArgumentResponse {
 
 message SubmitArgumentForAiRequest {
   string argument_id = 1;
-  string requester_person_id = 2;
+  string requester_person_id = 2 [deprecated = true]; // Derived from the JWT.
   int32 people = 3; // Session-local side: 1 or 2, not a user ID.
   int32 expected_version = 4;
 }

@@ -128,6 +128,9 @@ services:
       AI_QUEUE_PREFIX: ai.resolution
       AI_SHARDS: "2"
       EVIDENCE_DB_CONNECTION: Host=postgres;Port=5432;Database=evidence_db;Username=evidence;Password=evidence-local-only
+      Authentication__Jwt__Issuer: humanresolve.evidence-service
+      Authentication__Jwt__Audience: humanresolve.clients
+      Authentication__Jwt__SigningKey: development-only-change-this-to-a-unique-32-character-secret
     ports:
       - "127.0.0.1:50051:50051"
     depends_on:
@@ -139,6 +142,19 @@ services:
         condition: service_started
       ai-worker-1:
         condition: service_started
+
+  beef-crud-service:
+    image: sa-beef-crud:local
+    build:
+      context: ./BeefResolverCrud
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      BEEF_DB_PATH: /data/beef-resolver.db
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - beef-crud-data:/data
 
   demo-client:
     profiles: ["tools"]
@@ -158,3 +174,4 @@ volumes:
   ollama-data:
   postgres-data:
   mongo-data:
+  beef-crud-data:

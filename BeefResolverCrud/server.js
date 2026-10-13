@@ -4,7 +4,7 @@ const { existsSync } = require('node:fs');
 const path = require('node:path');
 
 const PORT = process.env.PORT || 3000;
-const DB_PATH = path.join(__dirname, 'beef-resolver.db');
+const DB_PATH = process.env.BEEF_DB_PATH || path.join(__dirname, 'beef-resolver.db');
 const SCHEMA_PATH = path.join(__dirname, 'schema.sql');
 
 function initialiseDatabase() {
