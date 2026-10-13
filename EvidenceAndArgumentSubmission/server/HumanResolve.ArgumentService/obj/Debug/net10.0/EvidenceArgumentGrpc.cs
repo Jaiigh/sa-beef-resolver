@@ -65,6 +65,10 @@ namespace HumanResolve.Argument.V1 {
     static readonly grpc::Marshaller<global::HumanResolve.Argument.V1.DeleteArgumentRequest> __Marshaller_humanresolve_argument_v1_DeleteArgumentRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::HumanResolve.Argument.V1.DeleteArgumentRequest.Parser));
     [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
     static readonly grpc::Marshaller<global::HumanResolve.Argument.V1.DeleteArgumentResponse> __Marshaller_humanresolve_argument_v1_DeleteArgumentResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::HumanResolve.Argument.V1.DeleteArgumentResponse.Parser));
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Marshaller<global::HumanResolve.Argument.V1.SubmitArgumentForAiRequest> __Marshaller_humanresolve_argument_v1_SubmitArgumentForAiRequest = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::HumanResolve.Argument.V1.SubmitArgumentForAiRequest.Parser));
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Marshaller<global::HumanResolve.Argument.V1.SubmitArgumentForAiResponse> __Marshaller_humanresolve_argument_v1_SubmitArgumentForAiResponse = grpc::Marshallers.Create(__Helper_SerializeMessage, context => __Helper_DeserializeMessage(context, global::HumanResolve.Argument.V1.SubmitArgumentForAiResponse.Parser));
 
     [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
     static readonly grpc::Method<global::HumanResolve.Argument.V1.CreateArgumentRequest, global::HumanResolve.Argument.V1.Argument> __Method_CreateArgument = new grpc::Method<global::HumanResolve.Argument.V1.CreateArgumentRequest, global::HumanResolve.Argument.V1.Argument>(
@@ -106,6 +110,14 @@ namespace HumanResolve.Argument.V1 {
         __Marshaller_humanresolve_argument_v1_DeleteArgumentRequest,
         __Marshaller_humanresolve_argument_v1_DeleteArgumentResponse);
 
+    [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+    static readonly grpc::Method<global::HumanResolve.Argument.V1.SubmitArgumentForAiRequest, global::HumanResolve.Argument.V1.SubmitArgumentForAiResponse> __Method_SubmitArgumentForAi = new grpc::Method<global::HumanResolve.Argument.V1.SubmitArgumentForAiRequest, global::HumanResolve.Argument.V1.SubmitArgumentForAiResponse>(
+        grpc::MethodType.Unary,
+        __ServiceName,
+        "SubmitArgumentForAi",
+        __Marshaller_humanresolve_argument_v1_SubmitArgumentForAiRequest,
+        __Marshaller_humanresolve_argument_v1_SubmitArgumentForAiResponse);
+
     /// <summary>Service descriptor</summary>
     public static global::Google.Protobuf.Reflection.ServiceDescriptor Descriptor
     {
@@ -146,6 +158,18 @@ namespace HumanResolve.Argument.V1 {
         throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
       }
 
+      /// <summary>
+      /// Publish an already saved SUBMITTED argument; retry the same version safely.
+      /// </summary>
+      /// <param name="request">The request received from the client.</param>
+      /// <param name="context">The context of the server-side call handler being invoked.</param>
+      /// <returns>The response to send back to the client (wrapped by a task).</returns>
+      [global::System.CodeDom.Compiler.GeneratedCode("grpc_csharp_plugin", null)]
+      public virtual global::System.Threading.Tasks.Task<global::HumanResolve.Argument.V1.SubmitArgumentForAiResponse> SubmitArgumentForAi(global::HumanResolve.Argument.V1.SubmitArgumentForAiRequest request, grpc::ServerCallContext context)
+      {
+        throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+      }
+
     }
 
     /// <summary>Creates service definition that can be registered with a server</summary>
@@ -158,7 +182,8 @@ namespace HumanResolve.Argument.V1 {
           .AddMethod(__Method_GetArgument, serviceImpl.GetArgument)
           .AddMethod(__Method_GetAllArguments, serviceImpl.GetAllArguments)
           .AddMethod(__Method_UpdateArgument, serviceImpl.UpdateArgument)
-          .AddMethod(__Method_DeleteArgument, serviceImpl.DeleteArgument).Build();
+          .AddMethod(__Method_DeleteArgument, serviceImpl.DeleteArgument)
+          .AddMethod(__Method_SubmitArgumentForAi, serviceImpl.SubmitArgumentForAi).Build();
     }
 
     /// <summary>Register service method with a service binder with or without implementation. Useful when customizing the service binding logic.
@@ -173,6 +198,7 @@ namespace HumanResolve.Argument.V1 {
       serviceBinder.AddMethod(__Method_GetAllArguments, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::HumanResolve.Argument.V1.GetAllArgumentsRequest, global::HumanResolve.Argument.V1.GetAllArgumentsResponse>(serviceImpl.GetAllArguments));
       serviceBinder.AddMethod(__Method_UpdateArgument, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::HumanResolve.Argument.V1.UpdateArgumentRequest, global::HumanResolve.Argument.V1.Argument>(serviceImpl.UpdateArgument));
       serviceBinder.AddMethod(__Method_DeleteArgument, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::HumanResolve.Argument.V1.DeleteArgumentRequest, global::HumanResolve.Argument.V1.DeleteArgumentResponse>(serviceImpl.DeleteArgument));
+      serviceBinder.AddMethod(__Method_SubmitArgumentForAi, serviceImpl == null ? null : new grpc::UnaryServerMethod<global::HumanResolve.Argument.V1.SubmitArgumentForAiRequest, global::HumanResolve.Argument.V1.SubmitArgumentForAiResponse>(serviceImpl.SubmitArgumentForAi));
     }
 
   }

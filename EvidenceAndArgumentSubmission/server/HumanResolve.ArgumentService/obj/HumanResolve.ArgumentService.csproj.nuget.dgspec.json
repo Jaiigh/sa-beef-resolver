@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj": {}
+    "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj": {}
   },
   "projects": {
-    "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj": {
+    "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
+        "projectUniqueName": "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
         "projectName": "HumanResolve.ArgumentService",
-        "projectPath": "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
+        "projectPath": "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
         "packagesPath": "/Users/thanaphat/.nuget/packages/",
-        "outputPath": "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/obj/",
+        "outputPath": "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/thanaphat/.nuget/NuGet/NuGet.Config"
@@ -49,6 +49,14 @@
             "Grpc.AspNetCore": {
               "target": "Package",
               "version": "[2.76.0, )"
+            },
+            "Npgsql": {
+              "target": "Package",
+              "version": "[10.0.0, )"
+            },
+            "RabbitMQ.Client": {
+              "target": "Package",
+              "version": "[7.2.0, )"
             }
           },
           "imports": [

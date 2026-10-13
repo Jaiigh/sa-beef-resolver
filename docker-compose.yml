@@ -1,0 +1,160 @@
+x-ai-worker: &ai-worker
+  image: sa-beef-ai-worker:local
+  build:
+    context: ./AIProblemResolution
+  restart: unless-stopped
+  init: true
+  environment:
+    RABBITMQ_URL: amqp://ai:ai-local-only@rabbitmq:5672/%2F
+    AI_QUEUE_PREFIX: ai.resolution
+    AI_SHARDS: "2"
+    MONGO_URI: mongodb://mongo:27017/?replicaSet=rs0
+    MONGO_DATABASE: ai_resolution_db
+    OLLAMA_URL: http://ollama:11434
+    OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:2b}
+    AI_TIMEOUT: ${AI_TIMEOUT:-120}
+    AI_ATTEMPTS: "3"
+  depends_on:
+    mongo-init:
+      condition: service_completed_successfully
+    rabbitmq:
+      condition: service_healthy
+    ollama-init:
+      condition: service_completed_successfully
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: evidence_db
+      POSTGRES_USER: evidence
+      POSTGRES_PASSWORD: evidence-local-only
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evidence -d evidence_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:7.0
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "quit(db.adminCommand({ping:1}).ok ? 0 : 1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  mongo-init:
+    image: mongo:7.0
+    entrypoint: ["mongosh", "mongodb://mongo:27017/?directConnection=true", "--quiet", "/init/mongo-init.js"]
+    volumes:
+      - ./database/mongo-init.js:/init/mongo-init.js:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: "no"
+
+  rabbitmq:
+    image: rabbitmq:4.3.6-management
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:8080:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ai
+      RABBITMQ_DEFAULT_PASS: ai-local-only
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  ollama-init:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:2b}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ['exec ollama pull "$$OLLAMA_MODEL"']
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  ai-worker-0:
+    <<: *ai-worker
+    command: ["python", "worker.py", "--shard", "0"]
+
+  ai-worker-1:
+    <<: *ai-worker
+    command: ["python", "worker.py", "--shard", "1"]
+
+  evidence-service:
+    image: sa-beef-evidence:local
+    build:
+      context: ./EvidenceAndArgumentSubmission
+      target: service
+    restart: unless-stopped
+    environment:
+      GRPC_BIND_ANY: "true"
+      GRPC_PORT: "50051"
+      RABBITMQ_URL: amqp://ai:ai-local-only@rabbitmq:5672/%2F
+      AI_QUEUE_PREFIX: ai.resolution
+      AI_SHARDS: "2"
+      EVIDENCE_DB_CONNECTION: Host=postgres;Port=5432;Database=evidence_db;Username=evidence;Password=evidence-local-only
+    ports:
+      - "127.0.0.1:50051:50051"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ai-worker-0:
+        condition: service_started
+      ai-worker-1:
+        condition: service_started
+
+  demo-client:
+    profiles: ["tools"]
+    build:
+      context: ./EvidenceAndArgumentSubmission
+      target: demo-client
+    environment:
+      GRPC_HOST: evidence-service
+      GRPC_PORT: "50051"
+      DEMO_DISPUTE_ID: ${DEMO_DISPUTE_ID:-}
+    depends_on:
+      evidence-service:
+        condition: service_started
+
+volumes:
+  rabbitmq-data:
+  ollama-data:
+  postgres-data:
+  mongo-data:

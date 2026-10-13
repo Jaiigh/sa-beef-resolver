@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.76.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
+    <PackageReference Include="Npgsql" Version="10.0.0" />
     <Protobuf Include="../../proto/evidence_argument.proto" GrpcServices="Server" Link="Protos/evidence_argument.proto" />
   </ItemGroup>
 </Project>

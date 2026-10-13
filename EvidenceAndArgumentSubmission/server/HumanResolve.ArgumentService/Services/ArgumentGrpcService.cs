@@ -4,13 +4,54 @@ using HumanResolve.ArgumentService.Repositories;
 using Proto = HumanResolve.Argument.V1;
 using DomainArgumentStatus = HumanResolve.ArgumentService.Domain.ArgumentStatus;
 using DomainEvidenceType = HumanResolve.ArgumentService.Domain.EvidenceType;
+using HumanResolve.ArgumentService.Messaging;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace HumanResolve.ArgumentService.Services;
 
-public sealed class ArgumentGrpcService(IArgumentRepository repository) : Proto.ArgumentService.ArgumentServiceBase
+public sealed class ArgumentGrpcService(IArgumentRepository repository, RabbitMqAiPublisher publisher,
+    AiParticipantRegistry participants, ILogger<ArgumentGrpcService> logger) : Proto.ArgumentService.ArgumentServiceBase
 {
     private const int DefaultPageSize = 20;
     private const int MaximumPageSize = 100;
+
+    public override async Task<Proto.SubmitArgumentForAiResponse> SubmitArgumentForAi(
+        Proto.SubmitArgumentForAiRequest request, ServerCallContext context)
+    {
+        var id = ParseGuid(request.ArgumentId, "argument_id");
+        var person = Required(request.RequesterPersonId, "requester_person_id");
+        if (request.People is not (1 or 2)) throw Rpc(StatusCode.InvalidArgument, "people must be 1 or 2");
+        var record = repository.Get(id) ?? throw Rpc(StatusCode.NotFound, "argument was not found");
+        if (record.PersonId != person) throw Rpc(StatusCode.PermissionDenied, "only the author may submit this argument");
+        if (request.ExpectedVersion != record.Version) throw Rpc(StatusCode.Aborted, "argument changed; fetch its latest version");
+        if (record.Status != DomainArgumentStatus.Submitted) throw Rpc(StatusCode.FailedPrecondition, "save argument with SUBMITTED status first");
+        if (!Regex.IsMatch(record.DisputeId, "\\A[A-Za-z0-9_-]{1,128}\\z"))
+            throw Rpc(StatusCode.InvalidArgument, "dispute_id must be compatible with AI sessionId (letters/digits/_/-)");
+        // Evidence references are claims/metadata; the worker does not download files.
+        var message = JsonSerializer.Serialize(new
+        {
+            argumentId = record.ArgumentId, version = record.Version, statement = record.Statement,
+            evidence = record.Evidence.Select(x => new { type = x.Type.ToString(), url = x.EvidenceUrl, description = x.Description })
+        }, new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
+        if (message.EnumerateRunes().Count() > 8000)
+            throw Rpc(StatusCode.InvalidArgument, "AI message including evidence metadata exceeds 8000 characters");
+        if (!participants.TryBind(record.DisputeId, person, request.People))
+            throw Rpc(StatusCode.FailedPrecondition, "side is already assigned to another author or author switched sides");
+        var messageId = $"argument_{record.ArgumentId:N}_v{record.Version}";
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        try
+        {
+            await publisher.PublishAsync(record.DisputeId, request.People, message, messageId, timeout.Token);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning("AI publication failed ({ErrorType}) for argument {ArgumentId}", ex.GetType().Name, id);
+            throw Rpc(StatusCode.Unavailable, "AI queue acceptance was not confirmed; retry SubmitArgumentForAi with the same argument/version");
+        }
+        return new Proto.SubmitArgumentForAiResponse { SessionId = record.DisputeId, MessageId = messageId, Queued = true };
+    }
 
     public override Task<Proto.Argument> CreateArgument(Proto.CreateArgumentRequest request, ServerCallContext context)
     {

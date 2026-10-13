@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+**/__pycache__/
+data/
+.env
+tests/
+tools/*
+!tools/migrate_sqlite.py
+.DS_Store

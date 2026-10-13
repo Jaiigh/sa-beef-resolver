@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "v1L9SiE/6Fk=",
+  "dgSpecHash": "tVuAVecaMP0=",
   "success": true,
-  "projectFilePath": "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
+  "projectFilePath": "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
   "expectedPackageFiles": [
     "/Users/thanaphat/.nuget/packages/google.protobuf/3.31.1/google.protobuf.3.31.1.nupkg.sha512",
     "/Users/thanaphat/.nuget/packages/grpc.aspnetcore/2.76.0/grpc.aspnetcore.2.76.0.nupkg.sha512",
@@ -12,7 +12,9 @@
     "/Users/thanaphat/.nuget/packages/grpc.net.client/2.76.0/grpc.net.client.2.76.0.nupkg.sha512",
     "/Users/thanaphat/.nuget/packages/grpc.net.clientfactory/2.76.0/grpc.net.clientfactory.2.76.0.nupkg.sha512",
     "/Users/thanaphat/.nuget/packages/grpc.net.common/2.76.0/grpc.net.common.2.76.0.nupkg.sha512",
-    "/Users/thanaphat/.nuget/packages/grpc.tools/2.76.0/grpc.tools.2.76.0.nupkg.sha512"
+    "/Users/thanaphat/.nuget/packages/grpc.tools/2.76.0/grpc.tools.2.76.0.nupkg.sha512",
+    "/Users/thanaphat/.nuget/packages/npgsql/10.0.0/npgsql.10.0.0.nupkg.sha512",
+    "/Users/thanaphat/.nuget/packages/rabbitmq.client/7.2.0/rabbitmq.client.7.2.0.nupkg.sha512"
   ],
   "logs": []
 }

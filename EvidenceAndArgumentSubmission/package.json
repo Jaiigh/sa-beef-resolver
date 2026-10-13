@@ -5,6 +5,7 @@
   "description": "Pure gRPC CRUD service for Human Resolve arguments and evidence",
   "scripts": {
     "start:client": "node client/src/client.js",
+    "demo:ai": "node client/src/ai-demo.js",
     "test:client": "node --check client/src/client.js"
   },
   "dependencies": {

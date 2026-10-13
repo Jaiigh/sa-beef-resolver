@@ -11,6 +11,8 @@ service ArgumentService {
   rpc GetAllArguments(GetAllArgumentsRequest) returns (GetAllArgumentsResponse);
   rpc UpdateArgument(UpdateArgumentRequest) returns (Argument);
   rpc DeleteArgument(DeleteArgumentRequest) returns (DeleteArgumentResponse);
+  // Publish an already saved SUBMITTED argument; retry the same version safely.
+  rpc SubmitArgumentForAi(SubmitArgumentForAiRequest) returns (SubmitArgumentForAiResponse);
 }
 
 enum ArgumentStatus {
@@ -89,4 +91,17 @@ message DeleteArgumentRequest {
 message DeleteArgumentResponse {
   string argument_id = 1;
   bool deleted = 2;
+}
+
+message SubmitArgumentForAiRequest {
+  string argument_id = 1;
+  string requester_person_id = 2;
+  int32 people = 3; // Session-local side: 1 or 2, not a user ID.
+  int32 expected_version = 4;
+}
+
+message SubmitArgumentForAiResponse {
+  string session_id = 1;
+  string message_id = 2;
+  bool queued = 3; // Broker confirmed acceptance; AI has not necessarily completed.
 }

@@ -135,6 +135,32 @@
           "build/Grpc.Tools.props": {},
           "build/Grpc.Tools.targets": {}
         }
+      },
+      "Npgsql/10.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net10.0/Npgsql.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/Npgsql.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "RabbitMQ.Client/7.2.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/RabbitMQ.Client.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/RabbitMQ.Client.dll": {
+            "related": ".xml"
+          }
+        }
       }
     }
   },
@@ -377,11 +403,49 @@
         "tools/windows_x86/grpc_csharp_plugin.exe",
         "tools/windows_x86/protoc.exe"
       ]
+    },
+    "Npgsql/10.0.0": {
+      "sha512": "xZAYhPOU2rUIFpV48xsqhCx9vXs6Y+0jX2LCoSEfDFYMw9jtAOUk3iQsCnDLrFIv9NT3JGMihn7nnuZsPKqJmA==",
+      "type": "package",
+      "path": "npgsql/10.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net10.0/Npgsql.dll",
+        "lib/net10.0/Npgsql.xml",
+        "lib/net8.0/Npgsql.dll",
+        "lib/net8.0/Npgsql.xml",
+        "lib/net9.0/Npgsql.dll",
+        "lib/net9.0/Npgsql.xml",
+        "npgsql.10.0.0.nupkg.sha512",
+        "npgsql.nuspec",
+        "postgresql.png"
+      ]
+    },
+    "RabbitMQ.Client/7.2.0": {
+      "sha512": "PPQ7cF7lwbhqC4up6en1bTUZlz06YqQwJecOJzsguTtyhNA7oL5uNDZIx/h6ZfcyPZV4V3DYKSCxfm4RUFLcbA==",
+      "type": "package",
+      "path": "rabbitmq.client/7.2.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "icon.png",
+        "lib/net8.0/RabbitMQ.Client.dll",
+        "lib/net8.0/RabbitMQ.Client.xml",
+        "lib/netstandard2.0/RabbitMQ.Client.dll",
+        "lib/netstandard2.0/RabbitMQ.Client.xml",
+        "rabbitmq.client.7.2.0.nupkg.sha512",
+        "rabbitmq.client.nuspec"
+      ]
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "Grpc.AspNetCore >= 2.76.0"
+      "Grpc.AspNetCore >= 2.76.0",
+      "Npgsql >= 10.0.0",
+      "RabbitMQ.Client >= 7.2.0"
     ]
   },
   "packageFolders": {
@@ -390,11 +454,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
+      "projectUniqueName": "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
       "projectName": "HumanResolve.ArgumentService",
-      "projectPath": "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
+      "projectPath": "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/HumanResolve.ArgumentService.csproj",
       "packagesPath": "/Users/thanaphat/.nuget/packages/",
-      "outputPath": "/Users/thanaphat/SoftwareArch_2110521/term_project/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/obj/",
+      "outputPath": "/Users/thanaphat/SoftwareArch_2110521/sa-beef-resolver/EvidenceAndArgumentSubmission/server/HumanResolve.ArgumentService/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/thanaphat/.nuget/NuGet/NuGet.Config"
@@ -432,6 +496,14 @@
           "Grpc.AspNetCore": {
             "target": "Package",
             "version": "[2.76.0, )"
+          },
+          "Npgsql": {
+            "target": "Package",
+            "version": "[10.0.0, )"
+          },
+          "RabbitMQ.Client": {
+            "target": "Package",
+            "version": "[7.2.0, )"
           }
         },
         "imports": [
